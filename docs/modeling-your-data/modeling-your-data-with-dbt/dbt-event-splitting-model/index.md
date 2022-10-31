@@ -4,6 +4,10 @@ date: "2022-10-24"
 sidebar_position: 104
 ---
 
+```mdx-code-block
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+```
 # Snowplow Event Splitting Package
 
 **The package source code can be found in the [snowplow/dbt-snowplow-event-splitting repo](https://github.com/snowplow/dbt-snowplow-event-splitting), and the docs for the [macro design here](https://snowplow.github.io/dbt-snowplow-event-splitting/#/overview/snowplow_event_splitting).** 
@@ -26,7 +30,7 @@ This package consists of two macros, a python script, and some example configura
   - `snowplow_split_events_model_gen.py` _(script)_: This script uses an input configuration to generate your per-event models based on the schemas used to generate those events in the first place. See the [operation](#operation) section for more information.
 
     ```yml title="snowplow_split_events_model_gen.py help"
-    usage: snowplow_split_events_model_gen.py [-h] [--version] [-v] [--dryRun] [--configHelp] config
+    usage: snowplow_split_events_model_gen.py [-h] [--version] [-v] [--dryRun] [--configHelp] [--cleanUp] config
 
     Produce dbt model files for splitting your Snowplow events table into 1 table per event.
 
@@ -35,10 +39,11 @@ This package consists of two macros, a python script, and some example configura
 
     optional arguments:
     -h, --help     show this help message and exit
-    --version      show program's version number and exit.
+    --version      show program's version number and exit
     -v, --verbose  verbose flag for the running of the tool
-    --dryRun       flag for a dry run (does not write to files).
-    --configHelp   prints information relating to the structure of the config file.
+    --dryRun       flag for a dry run (does not write/delete any files)
+    --configHelp   prints information relating to the structure of the config file
+    --cleanUp      delete any models not present in your config and exit (no models will be generated)
     ```
 
   - `example_event_split_config.json`: This file is an example of an input to the python script, showing all options and valid values. For additional information about the file structure run `python dbt_packages/snowplow_event_splitting/utils/snowplow_split_events_model_gen.py --configHelp` in your project root.
@@ -71,8 +76,10 @@ The configuration file is used to provide the information needed to generate the
 
 :::info
 The config file is a JSON file which can be viewed by running the python script with the `--configHelp` flag. The config file can be located anywhere in your project, but it must have the following structure. Note that you must provide **at least** one of `event_columns`, `self_describing_event_schema` or `context_schemas` for each event listed.
-
 :::
+
+<Tabs groupId="config-file">
+<TabItem value="desc" label="Field Description" default>
 
 - `config` _(required - object)_:
   - `resolver_file_path` _(required - string)_: Relative path to your resolver config json, or `"default"` to use iglucentral only
@@ -89,10 +96,132 @@ The config file is a JSON file which can be viewed by running the python script 
     - `context_schemas` _(optional (>=1 of) - array)_: Array of strings of `iglu:com.` type url(s) for the context/entities to include in the model
     - `context_aliases` _(optional - array)_: Array of strings of prefix to the column alias for context/entities
     - `table_name` _(optional - string)_: Name of the model, default is the event_name and major version number
+    - `version` _(optional - string - length 1)_: Version number to append to default table name, if `self_describing_event_schema` is provided uses major version number from that, if `table_name` is provided this is not used, default `1`
   - `event_2` _(option - object)_
   - ...
   - `event_n` _(option - object)_
 - `users` _(option - array)_: Array of strings of schemas for your user contexts to add to your users table as columns, if not provided will not generate users model
+
+</TabItem>
+<TabItem value="json" label="JSON Schema">
+
+```json
+{   
+    "description": "Schema for the Snowplow dbt event split python script configuration",
+    "self": {
+        "name": "splitter-config",
+        "format": "jsonschema",
+        "version": "1-0-0"
+    },
+    "properties": {
+        "config": {
+            "type": "object",
+            "properties": {
+                "resolver_file_path": {
+                    "type": "string"
+                },
+                "filtered_events_table_name": {
+                    "type": "string"
+                },
+                "users_table_name": {
+                    "type": "string"
+                },
+                "validate_schemas": {
+                    "type": "boolean"
+                },
+                "overwrite": {
+                    "type": "boolean"
+                },
+                "models_folder": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "resolver_file_path"
+            ],
+            "additionalProperties": False
+        },
+        "events": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "event_name": {
+                        "type": "string"
+                    },
+                    "event_columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "self_describing_event_schema": {
+                        "type": "string"
+                    },
+                    "context_schemas": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "context_aliases": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "table_name": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1
+                    }
+                },
+                "anyOf": [
+                    {
+                        "required": [
+                            "event_name",
+                            "self_describing_event_schema"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "event_name",
+                            "context_schemas"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "event_name",
+                            "event_columns"
+                        ]
+                    }
+                ],
+                "additionalProperties": False
+            },
+            "minItems": 1
+        },
+        "users": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "additionalProperties": False,
+    "type": "object",
+    "required": [
+        "config",
+        "events"
+    ]
+    
+}
+```
+
+</TabItem>
+</Tabs>
 
 An example configuration can be found in the `utils/example_event_split_config.json` file within the package.
 
@@ -122,5 +251,11 @@ All events will be updated including the filtered events table, it is not possib
 Adding or removing columns from your dbt model without specifying the `on_schema_change` model configuration, or directly altering the tables in your database, is very likely to result in unintended outcomes - either your new columns will not appear or dbt may return an error. Please see the [dbt docs](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) for what to do in this situation. If you need to backfill new columns regardless you can perform a rerun of the entire model following the instructions [here](/docs/modeling-your-data/modeling-your-data-with-dbt/dbt-custom-models/index.md#tearing-down-and-restarting-a-subset-of-models) *(note using the `--full-refresh` flag will not work in this case due to the use of the Snowplow incremental logic)*.
 :::
 
+#### Removing specific columns
+If you want to not select all columns from your self describing event or context then you can manually delete them from the lists in each model file, ensuring to delete the matching record in the `*_types` list as well. The same warning applies from [Updating your models](#updating-your-models), and any overwriting run of the script will remove these changes.
+
 ### Removing models
-Currently there is no method for removing models no longer listed in your config, if you wish to remove any models you can either [disable them in your project](https://docs.getdbt.com/reference/resource-configs/enabled) if you plan to turn them back on later, or simply remove the `.sql` files for the models themselves.
+You can remove all models that don't exist in your config but running the script with the `--cleanUp` flag. This will scan the `models_folder` folder provided in your config and list all models in this folder that don't match those listed in your config file; you will then be asked to confirm deletion of these. If you may wish to re-enable these models at a later date you can [disable them in your project](https://docs.getdbt.com/reference/resource-configs/enabled) instead.
+
+:::caution
+If you have other models in the same folder that were not generated via your config then this will attempt to delete those files.
