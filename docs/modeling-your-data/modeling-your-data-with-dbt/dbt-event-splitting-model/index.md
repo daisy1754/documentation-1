@@ -225,6 +225,8 @@ The config file is a JSON file which can be viewed by running the python script 
 
 An example configuration can be found in the `utils/example_event_split_config.json` file within the package.
 
+For [Snowplow BDP](/docs/getting-started-with-snowplow-bdp/what-is-snowplow-bdp/index.md) customers you can use the [Tracking Catalogue](/docs/discovering-data/tracking-catalog/index.md) to discover which events you are tracking and the contexts enabled for each event, however you will still need to get the schema urls from iglu.
+
 #### Using a different materialization
 By default the models use the `snowplow_incremental` method, which can be overwritten by setting the `snowplow__incremental_materialization` variable in your `dbt_project.yml`. See more details in the [Snowplow Materialization docs](/docs/modeling-your-data/modeling-your-data-with-dbt/dbt-advanced-usage/dbt-incremental-materialization/index.md).
 
