@@ -23,7 +23,7 @@ To setup your cloud environment as required you will need
 
 - to be able to set up a sub-account and appropriate permissions on AWS
 - to know which AWS region you’d like us to install your Snowplow pipeline into
-- to know whether or not you want VPC peering, and for which /21 or /22 CIDR range (note: [VPC peering is an additional bolt-on for basecamp and ascent tiers](https://snowplow.io/snowplow-bdp-product-description/#bolt-ons))
+- to know whether or not you want VPC peering, and for which /21 or /22 CIDR range (note: [VPC peering is an additional bolt-on for basecamp and ascent tiers](https://snowplow.io/snowplow-bdp-product-description/#bolt-ons))
 
 We often find our point of contact requires support from their DevOps or Networking colleagues to complete the cloud setup step; in Snowplow BDP Console you can [easily create accounts for colleagues](/docs/using-the-snowplow-console/managing-users/index.md) who can complete this step for you.
 
@@ -64,35 +64,40 @@ You will need to share this role with us as part of filling out the setup form i
  "cloudwatch:*",
  "dynamodb:*",
  "ec2:*",
- "es:*",
+ "ecs:*",
+ "eks:*",
  "elasticbeanstalk:*",
  "elasticloadbalancing:*",
  "elasticmapreduce:*",
+ "es:*",
  "execute-api:*",
  "events:*",
  "iam:*",
  "kinesis:*",
+ "kinesisanalytics:*",
+ "kms:DescribeKey",
+ "kms:List*",
  "lambda:*",
  "logs:*",
  "rds:*",
  "redshift:*",
- "s3:*",
- "sns:*",
- "ssm:*",
- "support:*",
  "route53:*",
- "ecs:*",
- "kms:List*",
- "kms:DescribeKey",
+ "route53resolver:*",
+ "s3:*",
  "secretsmanager:CreateSecret",
- "secretsmanager:TagResource",
+ "secretsmanager:DeleteSecret",
  "secretsmanager:DescribeSecret",
  "secretsmanager:GetResourcePolicy",
+ "secretsmanager:GetSecretValue",
  "secretsmanager:PutSecretValue",
- "secretsmanager:GetSecretValue" 
+ "secretsmanager:TagResource",
+ "sns:*",
+ "sqs:*"
+ "ssm:*",
+ "support:*"
 ```
 
-For complete documentation from Amazon go [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts.html). 
+For complete documentation from Amazon go [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts.html).
 
 ### Set up Role and IAM Permissions with **CloudFormation**
 
